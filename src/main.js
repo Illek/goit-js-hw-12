@@ -47,6 +47,7 @@ loadMoreBtn.addEventListener('click', async () => {
 
 function handleFetchResults(data) {
   const images = document.querySelector('#images');
+
   if (data.total === 0) {
     images.innerHTML = '';
     showToast(
@@ -59,7 +60,13 @@ function handleFetchResults(data) {
   }
 
   createMarkup(data);
-  loadMoreBtn.style.display = 'block';
+
+  // Check if the number of images is less than 15
+  if (data.hits.length < 15) {
+    loadMoreBtn.style.display = 'none';
+  } else {
+    loadMoreBtn.style.display = 'block';
+  }
 }
 
 function handleLoadMoreResults(data) {
