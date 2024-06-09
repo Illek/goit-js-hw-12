@@ -1,79 +1,107 @@
+import axios from 'axios';
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
-import createMarkup from './render-functions';
+import { loadMoreBtn } from '../main';
+const authKey = '44303353-9b630a8fdc8cdbe3ae770ff69';
+const perPage = 15;
+let page = 1;
+let currentSearchValue = '';
 
-const API_KEY = '44303353-9b630a8fdc8cdbe3ae770ff69';
-const BASE_URL = 'https://pixabay.com/api/';
-const loader = document.querySelector('.loader');
-const listOfImages = document.querySelector('#images');
+export async function fetchImages(searchValue) {
+  page = 1;
+  currentSearchValue = searchValue;
+  clearImages();
 
-export default function fetchImages(searchValue) {
-  resetImageList();
   showLoader();
+  hideLoadMoreBtn();
 
-  const url = constructURL(searchValue);
+  const searchParams = createSearchParams(searchValue, page);
+  const URL = createUrl(searchParams);
 
-  fetch(url)
-    .then(handleResponse)
-    .then(data => handleData(data))
-    .catch(handleError)
-    .finally(hideLoader);
+  try {
+    const response = await axios.get(URL);
+    return response.data;
+  } catch (error) {
+    console.error(error.message);
+  } finally {
+    hideLoader();
+  }
 }
 
-function resetImageList() {
+export async function loadMore() {
+  if (!currentSearchValue) return;
+
+  page += 1;
+  const searchParams = createSearchParams(currentSearchValue, page);
+  const URL = createUrl(searchParams);
+
+  try {
+    const response = await axios.get(URL);
+    const { totalHits } = response.data;
+    const totalPages = Math.ceil(totalHits / perPage);
+
+    if (page > totalPages) {
+      hideLoadMoreBtn();
+      showEndOfResultsMessage();
+      return;
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error(error.message);
+  } finally {
+    hideLoader();
+  }
+}
+
+function clearImages() {
+  const listOfImages = document.querySelector('#images');
   listOfImages.innerHTML = '';
 }
 
 function showLoader() {
+  const loader = document.querySelector('.loader');
   loader.style.display = 'block';
 }
 
 function hideLoader() {
+  const loader = document.querySelector('.loader');
   loader.style.display = 'none';
 }
 
-function constructURL(searchValue) {
-  const searchParams = new URLSearchParams({
-    key: API_KEY,
-    q: searchValue,
+function showLoadMoreBtn() {
+  loadMoreBtn.style.display = 'block';
+}
+
+function hideLoadMoreBtn() {
+  loadMoreBtn.style.display = 'none';
+}
+
+function createSearchParams(query, page) {
+  return new URLSearchParams({
+    key: authKey,
+    q: query,
     image_type: 'photo',
     orientation: 'horizontal',
     safesearch: true,
+    per_page: perPage,
+    page,
   });
-
-  return `${BASE_URL}?${searchParams}`;
 }
 
-function handleResponse(response) {
-  if (!response.ok) {
-    throw new Error(response.status);
-  }
-  return response.json();
+function createUrl(params) {
+  return `https://pixabay.com/api/?${params}`;
 }
 
-function handleData(data) {
-  if (data.total === 0) {
-    showNoResultsMessage();
-    return;
-  }
-  createMarkup(data);
-}
-
-function showNoResultsMessage() {
+function showEndOfResultsMessage() {
   iziToast.show({
     class: 'search-404',
-    message:
-      'Sorry, there are no images matching your search query. Please, try again!',
+    message: "We're sorry, but you've reached the end of search results.",
     position: 'topRight',
-    iconUrl: icon,
     backgroundColor: '#EF4040',
     transitionIn: 'bounceInDown',
     transitionOut: 'fadeOutUp',
     theme: 'dark',
     closeOnClick: true,
   });
-}
-
-function handleError(error) {
-  console.error('Fetch error:', error.message);
 }
