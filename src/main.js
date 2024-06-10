@@ -83,7 +83,7 @@ function handleLoadMoreResults(data) {
 }
 
 function handleError(error) {
-  console.error(error.message);
+  showToast(error.message, 'load-error', '#EF4040');
 }
 
 function showToast(message, className, backgroundColor) {

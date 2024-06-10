@@ -2,6 +2,7 @@ import axios from 'axios';
 import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 import { loadMoreBtn } from '../main';
+
 const authKey = '44303353-9b630a8fdc8cdbe3ae770ff69';
 const perPage = 15;
 let page = 1;
@@ -22,7 +23,7 @@ export async function fetchImages(searchValue) {
     const response = await axios.get(URL);
     return response.data;
   } catch (error) {
-    console.error(error.message);
+    showToast(error.message, 'search-error', '#EF4040');
   } finally {
     hideLoader();
   }
@@ -48,7 +49,7 @@ export async function loadMore() {
 
     return response.data;
   } catch (error) {
-    console.error(error.message);
+    showToast(error.message, 'load-more-error', '#EF4040');
   } finally {
     hideLoader();
   }
@@ -99,6 +100,19 @@ function showEndOfResultsMessage() {
     message: "We're sorry, but you've reached the end of search results.",
     position: 'topRight',
     backgroundColor: '#EF4040',
+    transitionIn: 'bounceInDown',
+    transitionOut: 'fadeOutUp',
+    theme: 'dark',
+    closeOnClick: true,
+  });
+}
+
+function showToast(message, className, backgroundColor) {
+  iziToast.show({
+    class: className,
+    message,
+    position: 'topRight',
+    backgroundColor,
     transitionIn: 'bounceInDown',
     transitionOut: 'fadeOutUp',
     theme: 'dark',
